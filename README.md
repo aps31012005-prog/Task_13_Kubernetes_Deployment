@@ -320,8 +320,3 @@ The successful deployment, service accessibility, application testing, and Kuber
 
 ---
 
-## Author
-
-**Name:** Aryan Shetty
-
-**Task:** Task 13 – Deploying Deep Learning Applications on Kubernetes
