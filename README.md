@@ -1,111 +1,65 @@
-# Task 12: Kubernetes Cluster Setup and Deployment
+# Task 13: Deploying Deep Learning Applications on Kubernetes
 
-## Kubernetes Orchestration of a Containerized Deep Learning Application
+## Overview
 
----
+This project demonstrates the deployment and external exposure of a containerized deep learning application in a Kubernetes environment.
 
-## 1. Introduction
+The application consists of a **Flask-based Deep Learning API** for CIFAR-10 image classification and a **Streamlit frontend** for user interaction. Kubernetes Deployment and Service manifests are used to manage, deploy, and expose these application components.
 
-This project demonstrates the setup and deployment of a containerized deep learning application using Kubernetes. The application consists of a Flask REST API backend and a Streamlit frontend for CIFAR-10 image classification.
-
-The application was previously containerized using Docker. In this task, Kubernetes is used to orchestrate the application components, manage containers through Deployments and Services, and provide communication between the frontend and backend.
-
-The local Kubernetes cluster was created using Minikube with Docker as the container runtime.
+The project also demonstrates replica scaling, resource configuration, and RollingUpdate deployment strategy.
 
 ---
 
-## 2. Objective
+## Objective
 
-The main objectives of this task are:
-
-* To understand the fundamentals of Kubernetes orchestration.
-* To set up a local Kubernetes cluster using Minikube.
-* To deploy containerized applications using Kubernetes Deployments.
-* To expose applications using Kubernetes Services.
-* To verify Pod and Service operations.
-* To establish communication between Streamlit and Flask components.
-* To monitor the status of Kubernetes resources.
-* To test the deployed deep learning prediction application.
+To deploy and expose containerized deep learning applications in a Kubernetes environment and verify their accessibility and functionality.
 
 ---
 
-## 3. Technologies Used
+## Technologies Used
 
-The following technologies and tools were used:
-
+* Python
+* TensorFlow / Keras
+* Flask
+* Streamlit
+* Docker
 * Kubernetes
 * Minikube
 * kubectl
-* Docker Desktop
-* Docker
-* Python
-* Flask
-* Streamlit
-* TensorFlow
-* NumPy
-* Pillow
-* CIFAR-10 CNN Model
-* YAML configuration files
-* Windows PowerShell
-* Visual Studio Code
+* PowerShell
+* CIFAR-10 Dataset
 
 ---
 
-## 4. Application Architecture
+## Application Architecture
 
-The application contains two major components:
+The application consists of two main components:
 
-### Flask Backend
+### 1. Flask API
 
-The Flask application provides a REST API for CIFAR-10 image prediction.
+The Flask backend loads the trained CIFAR-10 deep learning model and provides an API endpoint for image prediction.
 
-The API:
+**Port:** `5000`
 
-* Loads the trained CNN model.
-* Receives an image through the `/predict` endpoint.
-* Performs image preprocessing.
-* Generates the prediction.
-* Returns the predicted class and confidence.
+### 2. Streamlit Frontend
 
-### Streamlit Frontend
+The Streamlit application provides a graphical interface where users can upload CIFAR-10 images and view prediction results.
 
-The Streamlit application provides a graphical user interface.
+**Port:** `8501`
 
-The frontend:
+### Kubernetes Services
 
-* Allows the user to upload an image.
-* Communicates with the Flask REST API.
-* Sends the uploaded image to the backend.
-* Displays the predicted class.
-* Displays the prediction confidence.
+* Flask API → `ClusterIP`
+* Streamlit → `NodePort`
 
-### Kubernetes Architecture
-
-The Kubernetes deployment consists of:
-
-```text
-                    Kubernetes Cluster
-                           |
-             +-------------+-------------+
-             |                           |
-      Streamlit Pod                 Flask Pod
-             |                           |
-      Streamlit Service          Flask API Service
-       (NodePort)                    (ClusterIP)
-             |                           |
-             +---------- API ------------+
-                           |
-                     CNN Model
-                           |
-                     CIFAR-10
-```
+The Flask API is used for internal communication within the Kubernetes cluster, while the Streamlit service is exposed externally for browser access.
 
 ---
 
-## 5. Project Structure
+## Project Structure
 
 ```text
-Task12_Kubernetes/
+Task13_Kubernetes_Deployment/
 │
 ├── model/
 │   └── cifar10_cnn.keras
@@ -114,526 +68,260 @@ Task12_Kubernetes/
 │   └── 1_Image_Prediction.py
 │
 ├── screenshots/
-│   ├── 01_minikube_cluster_verification.png
-│   ├── 02_minikube_docker_images.png
-│   ├── 03_flask_pod_running.png
-│   ├── 04_kubernetes_pods_running.png
-│   ├── 05_kubernetes_services.png
-│   ├── 06_kubernetes_streamlit_application.png
-│   ├── 07_kubernetes_flask_api_health.png
-│   ├── 08_kubernetes_frog_prediction.png
-│   ├── 09_kubernetes_truck_prediction.png
-│   ├── 10_kubernetes_deployments.png
-│   ├── 11_kubernetes_cluster_resources.png
-│   ├── 12_streamlit_flask_api_connected.png
-│   ├── 13_kubernetes_streamlit_frog_prediction.png
-│   └── 14_final_kubernetes_verification.png
 │
 ├── app.py
 ├── flask_api.py
-├── frog.png
-├── truck.png
 ├── Dockerfile.flask
 ├── Dockerfile.streamlit
 ├── docker-compose.yml
-├── .dockerignore
-├── requirements.txt
 ├── flask-deployment.yaml
 ├── flask-service.yaml
 ├── streamlit-deployment.yaml
-└── streamlit-service.yaml
+├── streamlit-service.yaml
+├── requirements.txt
+├── .dockerignore
+├── frog.png
+├── truck.png
+└── README.md
 ```
 
 ---
 
-## 6. Kubernetes Cluster Setup
+## Kubernetes Deployment Configuration
 
-Minikube was used to create a local Kubernetes cluster.
+Two Kubernetes Deployment manifests are used:
 
-The cluster was started using the Docker driver:
+* `flask-deployment.yaml`
+* `streamlit-deployment.yaml`
+
+Each application is configured with **2 replicas** to demonstrate workload scaling.
+
+The deployments also use the **RollingUpdate** strategy.
+
+---
+
+## Resource Configuration
+
+CPU and memory requests and limits are configured for the application containers.
+
+### Requests
+
+```text
+CPU: 250m
+Memory: 512Mi
+```
+
+### Limits
+
+```text
+CPU: 500m
+Memory: 1Gi
+```
+
+This configuration demonstrates Kubernetes resource management for deployed workloads.
+
+---
+
+## Kubernetes Services
+
+### Flask API Service
+
+```text
+Service Name: flask-api-service
+Type: ClusterIP
+Port: 5000
+Target Port: 5000
+```
+
+The Flask API uses a ClusterIP service for internal communication within the Kubernetes cluster.
+
+### Streamlit Service
+
+```text
+Service Name: streamlit-service
+Type: NodePort
+Port: 8501
+Target Port: 8501
+```
+
+The Streamlit application uses a NodePort service to allow external browser access.
+
+---
+
+## Deployment Commands
+
+Start the Minikube Kubernetes cluster:
 
 ```powershell
 minikube start --driver=docker
 ```
 
-The cluster status was verified using:
+Verify the cluster:
 
 ```powershell
 minikube status
 ```
 
-The Kubernetes node was then verified using:
+Check Kubernetes nodes:
 
 ```powershell
 kubectl get nodes
 ```
 
-The node successfully reached the `Ready` state.
-
----
-
-## 7. Docker Images in Minikube
-
-The Flask and Streamlit Docker images were built directly into the Minikube environment.
-
-Flask image:
-
-```powershell
-minikube image build -t task12-flask-api:latest -f Dockerfile.flask .
-```
-
-Streamlit image:
-
-```powershell
-minikube image build -t task12-streamlit:latest -f Dockerfile.streamlit .
-```
-
-The available images were verified using:
-
-```powershell
-minikube image ls --format table
-```
-
-The following application images were available:
-
-```text
-task12-flask-api:latest
-task12-streamlit:latest
-```
-
-The Kubernetes Deployments use:
-
-```yaml
-imagePullPolicy: Never
-```
-
-This allows Kubernetes to use the locally available Minikube images instead of attempting to pull them from an external container registry.
-
----
-
-## 8. Flask Kubernetes Deployment
-
-The Flask backend was deployed using `flask-deployment.yaml`.
-
-The Deployment configuration defines:
-
-* Deployment name: `flask-api`
-* Replica count: 1
-* Container name: `flask-api`
-* Container port: 5000
-* Docker image: `task12-flask-api:latest`
-
-The Deployment was created using:
+Apply the Flask deployment:
 
 ```powershell
 kubectl apply -f flask-deployment.yaml
 ```
 
-The Flask Pod was verified using:
-
-```powershell
-kubectl get pods
-```
-
-The Pod successfully reached the `Running` state.
-
----
-
-## 9. Flask Kubernetes Service
-
-A Kubernetes Service was created for the Flask backend using:
-
-```powershell
-kubectl apply -f flask-service.yaml
-```
-
-The Service is named:
-
-```text
-flask-api-service
-```
-
-It exposes port:
-
-```text
-5000
-```
-
-The Service type is:
-
-```text
-ClusterIP
-```
-
-ClusterIP allows other Pods inside the Kubernetes cluster to communicate with the Flask API.
-
----
-
-## 10. Streamlit Kubernetes Deployment
-
-The Streamlit frontend was deployed using `streamlit-deployment.yaml`.
-
-The Deployment contains:
-
-* Deployment name: `streamlit`
-* Replica count: 1
-* Container name: `streamlit`
-* Container port: 8501
-* Docker image: `task12-streamlit:latest`
-
-The Deployment was created using:
+Apply the Streamlit deployment:
 
 ```powershell
 kubectl apply -f streamlit-deployment.yaml
 ```
 
-The Pods were verified using:
-
-```powershell
-kubectl get pods
-```
-
-The Streamlit Pod successfully reached the `Running` state.
-
----
-
-## 11. Streamlit Kubernetes Service
-
-A Kubernetes Service was created for the Streamlit frontend using:
-
-```powershell
-kubectl apply -f streamlit-service.yaml
-```
-
-The Service is named:
-
-```text
-streamlit-service
-```
-
-It exposes port:
-
-```text
-8501
-```
-
-The Service type is:
-
-```text
-NodePort
-```
-
-NodePort allows the Streamlit application to be accessed from the local machine.
-
-The Streamlit service URL was obtained using:
-
-```powershell
-minikube service streamlit-service --url
-```
-
----
-
-## 12. Kubernetes Resource Verification
-
-The deployed resources were checked using:
-
-```powershell
-kubectl get pods,services,deployments
-```
-
-This command was used to verify:
-
-* Running Pods
-* Kubernetes Services
-* Deployments
-* Replica availability
-
-Both Flask and Streamlit components were successfully deployed.
-
----
-
-## 13. Flask API Health Verification
-
-The Flask Service was temporarily exposed to the local machine using:
-
-```powershell
-kubectl port-forward service/flask-api-service 5000:5000
-```
-
-The Flask health endpoint was then accessed through:
-
-```text
-http://127.0.0.1:5000/
-```
-
-The API returned its health/status response, confirming that the Flask backend was running successfully inside Kubernetes.
-
----
-
-## 14. API Prediction Testing
-
-The Flask prediction endpoint was tested using CIFAR-10 sample images.
-
-### Frog Image
-
-The following command was used:
-
-```powershell
-curl.exe -X POST -F "image=@frog.png" http://127.0.0.1:5000/predict
-```
-
-The Flask API processed the image and returned a prediction response containing the predicted class and confidence.
-
-### Truck Image
-
-The truck image was also tested:
-
-```powershell
-curl.exe -X POST -F "image=@truck.png" http://127.0.0.1:5000/predict
-```
-
-The successful responses verified that the CNN model was accessible through the containerized Flask API.
-
----
-
-## 15. Streamlit and Flask Integration
-
-The Streamlit application communicates with the Flask backend using the Kubernetes Service name.
-
-The API configuration used by the Streamlit application is:
-
-```python
-FLASK_API_URL = "http://flask-api-service:5000"
-```
-
-The Kubernetes Service name provides internal communication between the Streamlit Pod and Flask Pod.
-
-The Streamlit interface includes a backend connection check that verifies the Flask API status.
-
-A successful connection confirms communication between the two Kubernetes-managed application components.
-
----
-
-## 16. End-to-End Prediction
-
-An end-to-end prediction was performed through the Streamlit frontend.
-
-The workflow was:
-
-```text
-User uploads image
-        ↓
-Streamlit Frontend
-        ↓
-flask-api-service
-        ↓
-Flask REST API
-        ↓
-CIFAR-10 CNN Model
-        ↓
-Prediction
-        ↓
-Flask JSON Response
-        ↓
-Streamlit Result Display
-```
-
-The prediction result and confidence value were displayed directly in the Streamlit interface.
-
-This verified the complete application workflow inside the Kubernetes environment.
-
----
-
-## 17. Kubernetes Commands Used
-
-Important Kubernetes commands used during implementation include:
-
-```powershell
-minikube start --driver=docker
-```
-
-```powershell
-minikube status
-```
-
-```powershell
-kubectl get nodes
-```
-
-```powershell
-minikube image ls --format table
-```
-
-```powershell
-kubectl apply -f flask-deployment.yaml
-```
+Apply the Flask service:
 
 ```powershell
 kubectl apply -f flask-service.yaml
 ```
 
-```powershell
-kubectl apply -f streamlit-deployment.yaml
-```
+Apply the Streamlit service:
 
 ```powershell
 kubectl apply -f streamlit-service.yaml
 ```
 
-```powershell
-kubectl get pods
-```
+---
 
-```powershell
-kubectl get services
-```
+## Deployment Verification
+
+Check deployments:
 
 ```powershell
 kubectl get deployments
 ```
 
-```powershell
-kubectl get pods,services,deployments
-```
+Check running pods:
 
 ```powershell
-kubectl get all
+kubectl get pods
 ```
 
+Check services:
+
 ```powershell
-kubectl port-forward service/flask-api-service 5000:5000
+kubectl get services
 ```
+
+Check rollout status:
+
+```powershell
+kubectl rollout status deployment/flask-api
+kubectl rollout status deployment/streamlit
+```
+
+---
+
+## Replica Scaling
+
+The deployments are configured with two replicas.
+
+The replica status can be verified using:
+
+```powershell
+kubectl get deployments
+```
+
+The running application pods can be verified using:
+
+```powershell
+kubectl get pods
+```
+
+This demonstrates that multiple instances of the application workloads can run within the Kubernetes environment.
+
+---
+
+## External Application Access
+
+The Streamlit application can be exposed using Minikube:
 
 ```powershell
 minikube service streamlit-service --url
 ```
 
+The generated URL can be opened in a web browser to access the Streamlit application.
+
+---
+
+## Flask API Testing
+
+The Flask API health endpoint can be tested using:
+
 ```powershell
-kubectl rollout restart deployment streamlit
+curl.exe http://127.0.0.1:5000/
 ```
 
-```powershell
-kubectl rollout status deployment streamlit
-```
+A successful response confirms that the Flask prediction API is running.
 
 ---
 
-## 18. YAML Configuration Files
+## Application Testing
 
-The project uses four Kubernetes YAML files:
+The deployed Streamlit application was tested using sample CIFAR-10 images.
 
-### flask-deployment.yaml
+Test images include:
 
-Defines the Flask backend Deployment and its container configuration.
+* `frog.png`
+* `truck.png`
 
-### flask-service.yaml
-
-Creates an internal ClusterIP Service for Flask API communication.
-
-### streamlit-deployment.yaml
-
-Defines the Streamlit frontend Deployment and its container configuration.
-
-### streamlit-service.yaml
-
-Creates a NodePort Service to provide access to the Streamlit frontend.
-
-Using separate Deployment and Service objects provides a clear separation between application management and network access.
+The application successfully processed the uploaded images and displayed the corresponding prediction results and confidence values.
 
 ---
 
-## 19. Verification Results
+## Results
 
-The following operations were successfully verified:
+The Kubernetes deployment was successfully completed.
 
-| Operation                              | Result     |
-| -------------------------------------- | ---------- |
-| Minikube cluster setup                 | Successful |
-| Kubernetes node verification           | Ready      |
-| Flask Docker image                     | Available  |
-| Streamlit Docker image                 | Available  |
-| Flask Deployment                       | Running    |
-| Streamlit Deployment                   | Running    |
-| Flask Service                          | Available  |
-| Streamlit Service                      | Available  |
-| Flask health check                     | Successful |
-| Frog API prediction                    | Successful |
-| Truck API prediction                   | Successful |
-| Streamlit-Flask connection             | Successful |
-| Streamlit prediction                   | Successful |
-| Final Kubernetes resource verification | Successful |
+The following results were verified:
+
+* Flask API deployed successfully.
+* Streamlit application deployed successfully.
+* Multiple replicas were created for the workloads.
+* Kubernetes Services were successfully configured.
+* Flask API accessibility was verified.
+* Streamlit application was externally accessible.
+* RollingUpdate deployment completed successfully.
+* CPU and memory resource configurations were applied.
+* CIFAR-10 image prediction was successfully tested.
 
 ---
 
-## 20. Observations
+## Observations
 
-The following observations were made during the implementation:
+The Kubernetes environment successfully managed the Flask API and Streamlit application as separate workloads.
 
-1. Minikube provides a convenient local Kubernetes environment for development and testing.
-2. Kubernetes Deployments manage application Pods and maintain the desired replica count.
-3. Kubernetes Services provide stable network endpoints for application communication.
-4. The Flask API was exposed internally using a ClusterIP Service.
-5. The Streamlit frontend was exposed using a NodePort Service.
-6. Kubernetes service names can be used for communication between Pods.
-7. The local Docker images were loaded into the Minikube environment.
-8. The `imagePullPolicy: Never` setting allowed Kubernetes to use the locally built images.
-9. Pod and Deployment status can be monitored using `kubectl`.
-10. Port forwarding can be used to test an internal Kubernetes Service from the local machine.
-11. The complete Streamlit-to-Flask-to-CNN workflow was successfully tested.
-12. Kubernetes provides a structured approach for managing multiple containerized application components.
+The use of separate Services allowed internal Flask API communication and external Streamlit access.
+
+Replica configuration demonstrated the ability to run multiple instances of application components, while resource requests and limits provided controlled resource allocation.
+
+The RollingUpdate strategy allowed the deployment configuration to be updated without manually recreating the complete application environment.
 
 ---
 
-## 21. Conclusion
+## Conclusion
 
-This task successfully demonstrated the setup and deployment of a containerized deep learning application using Kubernetes and Minikube.
+This task successfully demonstrated the deployment and exposure of a containerized deep learning application using Kubernetes.
 
-A local Kubernetes cluster was created and verified. The Flask REST API and Streamlit frontend were deployed using Kubernetes Deployments. Kubernetes Services were configured to provide internal backend communication and external frontend access.
+Kubernetes Deployment manifests were created and configured for the Flask API and Streamlit frontend. Services were configured to provide internal and external connectivity. The deployment was further enhanced using multiple replicas, resource requests and limits, and a RollingUpdate strategy.
 
-The Flask API was tested using health checks and CIFAR-10 image predictions. The Streamlit frontend was also connected to the Flask backend using the Kubernetes Service name. Finally, an end-to-end image prediction workflow was successfully verified.
-
-The implementation provided practical understanding of Kubernetes Pods, Deployments, Services, container images, networking, service discovery, and application monitoring.
+The successful deployment, service accessibility, application testing, and Kubernetes verification confirm that the deep learning application was successfully deployed in a Kubernetes environment.
 
 ---
 
-## 22. Screenshots
+## Author
 
-The implementation was documented using 14 screenshots covering:
+**Name:** Aryan Shetty
 
-1. Minikube cluster verification
-2. Minikube Docker images
-3. Flask Pod running
-4. Kubernetes Pods running
-5. Kubernetes Services
-6. Streamlit application
-7. Flask API health check
-8. Frog prediction through Flask API
-9. Truck prediction through Flask API
-10. Kubernetes Deployments
-11. Kubernetes cluster resources
-12. Streamlit-Flask API connection
-13. Streamlit frog prediction
-14. Final Kubernetes verification
-
----
-
-## 23. Final Result
-
-The Kubernetes deployment was completed successfully.
-
-The final system consists of:
-
-```text
-Kubernetes / Minikube
-        │
-        ├── Flask Deployment
-        │       └── Flask API Pod
-        │             └── CIFAR-10 CNN Model
-        │
-        └── Streamlit Deployment
-                └── Streamlit Pod
-                        │
-                        └── flask-api-service
-```
-
-The application successfully demonstrates container orchestration, service-based communication, API integration, and deep learning inference using Kubernetes.
+**Task:** Task 13 – Deploying Deep Learning Applications on Kubernetes
